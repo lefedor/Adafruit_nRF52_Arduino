@@ -221,14 +221,14 @@ bool EddyStoneTlm::start(void)
 	
 	uint16_t eddy_uuid;
 	
-    uint8_t  frame_type;
-    uint8_t  version;
+    uint8_t frame_type;
+    uint8_t version;
     
-    uint16_t  batt;
-    uint16_t  temp;
+    uint16_t batt;
+    uint16_t temp;
     
-    uint32_t  pdu_count;
-    uint32_t  pwr_on_time;
+    uint32_t pdu_count;
+    uint32_t pwr_on_time;
     
   } eddy =
   {
@@ -245,34 +245,46 @@ bool EddyStoneTlm::start(void)
       
       .pdu_count = 0x00000000,
       .pwr_on_time = 0x00000000
+      
   };
 
-
-	/* TLM advertising data: * /
-	uint8_t advdata_tlm[] =
-	{
-	  0x03,  // Length
-	  0x03,  // Param: Service List
-	  0xAA, 0xFE,  // Eddystone ID
-	  0x11,  // Length
-	  0x16,  // Service Data
-	  0xAA, 0xFE, // Eddystone ID
-	  0x20,  // TLM flag
-	  0x00, // TLM version
-	  /* [10] */ 0x00, 0x00,  // Battery voltage
-	  /* [12] */ 0x80, 0x00,  // Beacon temperature
-	  /* [14] */ 0x00, 0x00, 0x00, 0x00, // Advertising PDU count
-	  /* [18] */ 0x00, 0x00, 0x00, 0x00 // Time since reboot
-	};
   
   float batt = _batt;
   float temp = _temp;
+  
+	Serial.println("t1");
+	Serial.println(temp);
+	Serial.println(temp, HEX);
+	Serial.println((uint16_t)((int)(1000 * temp)));
+	
+	Serial.println("b1");
+	Serial.println(batt);
+	Serial.println(batt, HEX);
+	Serial.println((uint16_t)((int)(1000 * batt)));
+  
+  uint16_t batt_adv = (uint16_t)((int)(1000 * batt));
+  batt_adv = (batt_adv>>8) | (batt_adv<<8);
+  eddy.batt = batt_adv;
+  
+  uint16_t temp_adv = (uint16_t)((int)(temp*256.0));
+  
+  //temp_adv = (temp_adv>>8) | (temp_adv<<8);
+  
+  eddy.temp = temp_adv;
+  
+  uint32_t pwr_on_time_adv = (uint32_t)((unsigned long)(millis() / 100));
+  pwr_on_time_adv = ((pwr_on_time_adv>>24)&0xff) | // move byte 3 to byte 0
+                    ((pwr_on_time_adv<<8)&0xff0000) | // move byte 1 to byte 2
+                    ((pwr_on_time_adv>>8)&0xff00) | // move byte 2 to byte 1
+                    ((pwr_on_time_adv<<24)&0xff000000); // byte 0 to byte 3
+
+  eddy.pwr_on_time = pwr_on_time_adv;
   
   // TLM data len
   uint8_t len = 16;
   
   // Clear data frame
-  VERIFY ( Bluefruit.Advertising.clearData();
+  Bluefruit.Advertising.clearData();
   
   // Add UUID16 list with EddyStone
   VERIFY ( Bluefruit.Advertising.addUuid(UUID16_SVC_EDDYSTONE) );

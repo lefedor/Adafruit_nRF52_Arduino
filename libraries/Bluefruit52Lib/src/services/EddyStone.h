@@ -79,7 +79,7 @@ class EddyStoneTlm
   public:
   
     EddyStoneTlm(void);
-    EddyStoneTlm(int8_t rssiAt0m, float temp = -128, float batt = 0.0);
+    EddyStoneTlm(int8_t rssiAt0m, float temp = 0x8000, float batt = 0x8000);
 
     bool setTemp(float temp);
     bool setBatt(float batt);
