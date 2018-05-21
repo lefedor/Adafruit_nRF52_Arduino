@@ -252,16 +252,6 @@ bool EddyStoneTlm::start(void)
   float batt = _batt;
   float temp = _temp;
   
-	Serial.println("t1");
-	Serial.println(temp);
-	Serial.println(temp, HEX);
-	Serial.println((uint16_t)((int)(1000 * temp)));
-	
-	Serial.println("b1");
-	Serial.println(batt);
-	Serial.println(batt, HEX);
-	Serial.println((uint16_t)((int)(1000 * batt)));
-  
   uint16_t batt_adv = (uint16_t)((int)(1000 * batt));
   batt_adv = (batt_adv>>8) | (batt_adv<<8);
   eddy.batt = batt_adv;
