@@ -66,4 +66,27 @@ class EddyStoneUrl
 };
 
 
+/* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
+
+class EddyStoneTlm
+{
+  
+  private:
+    int8_t _rssi;
+    float _temp;
+    float _batt;
+
+  public:
+  
+    EddyStoneTlm(void);
+    EddyStoneTlm(int8_t rssiAt0m, float temp = -128, float batt = 0.0);
+
+    bool setTemp(float temp);
+    bool setBatt(float batt);
+    void setRssi(int8_t rssiAt0m);
+
+    bool start(void);
+};
+
+
 #endif /* EDDYSTONE_H_ */

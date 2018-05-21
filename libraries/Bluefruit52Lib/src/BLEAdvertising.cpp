@@ -325,6 +325,13 @@ bool BLEAdvertising::setBeacon(EddyStoneUrl& eddy_url)
   return eddy_url.start();
 }
 
+/* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
+
+bool BLEAdvertising::setBeacon(EddyStoneTlm& eddy_tlm)
+{
+  return eddy_tlm.start();
+}
+
 void BLEAdvertising::restartOnDisconnect(bool enable)
 {
   _start_if_disconnect = enable;

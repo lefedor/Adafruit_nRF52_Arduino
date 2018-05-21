@@ -178,3 +178,113 @@ bool EddyStoneUrl::start(void)
 
   return true;
 }
+
+
+
+/* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
+
+EddyStoneTlm::EddyStoneTlm(void)
+{
+  _rssi = 0;
+  _temp = 0;
+  _batt = 0;
+}
+
+EddyStoneTlm::EddyStoneTlm(int8_t rssiAt0m, float temp, float batt)
+{
+  _rssi = rssiAt0m;
+  _temp = temp;
+  _batt = batt;
+}
+
+void EddyStoneTlm::setRssi(int8_t rssiAt0m)
+{
+  _rssi = rssiAt0m;
+}
+
+bool EddyStoneTlm::setTemp(float temp)
+{
+  _temp = temp;
+}
+
+bool EddyStoneTlm::setBatt(float batt)
+{
+  _batt = batt;
+}
+
+bool EddyStoneTlm::start(void)
+{
+ 
+  struct ATTR_PACKED {
+	
+	//uint8_t  length;
+	
+	uint16_t eddy_uuid;
+	
+    uint8_t  frame_type;
+    uint8_t  version;
+    
+    uint16_t  batt;
+    uint16_t  temp;
+    
+    uint32_t  pdu_count;
+    uint32_t  pwr_on_time;
+    
+  } eddy =
+  {
+      //.length = 0x11,
+      
+      .eddy_uuid  = UUID16_SVC_EDDYSTONE,
+      .frame_type = EDDYSTONE_TYPE_TLM,
+      //.frame_type = 0x11,
+      
+      .version = 0x00,
+      
+      .batt = 0x0000,
+      .temp = 0x8000,
+      
+      .pdu_count = 0x00000000,
+      .pwr_on_time = 0x00000000
+  };
+
+
+	/* TLM advertising data: * /
+	uint8_t advdata_tlm[] =
+	{
+	  0x03,  // Length
+	  0x03,  // Param: Service List
+	  0xAA, 0xFE,  // Eddystone ID
+	  0x11,  // Length
+	  0x16,  // Service Data
+	  0xAA, 0xFE, // Eddystone ID
+	  0x20,  // TLM flag
+	  0x00, // TLM version
+	  /* [10] */ 0x00, 0x00,  // Battery voltage
+	  /* [12] */ 0x80, 0x00,  // Beacon temperature
+	  /* [14] */ 0x00, 0x00, 0x00, 0x00, // Advertising PDU count
+	  /* [18] */ 0x00, 0x00, 0x00, 0x00 // Time since reboot
+	};
+  
+  float batt = _batt;
+  float temp = _temp;
+  
+  // TLM data len
+  uint8_t len = 16;
+  
+  // Clear data frame
+  VERIFY ( Bluefruit.Advertising.clearData();
+  
+  // Add UUID16 list with EddyStone
+  VERIFY ( Bluefruit.Advertising.addUuid(UUID16_SVC_EDDYSTONE) );
+
+  // Add Eddystone Service Data
+  VERIFY ( Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_SERVICE_DATA, &eddy, len) );
+  //VERIFY ( Bluefruit.Advertising.setData(advdata_tlm, sizeof(advdata_tlm)) );
+
+  return true;
+  
+}
+
+
+
+
