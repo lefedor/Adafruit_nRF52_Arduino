@@ -1,6 +1,6 @@
-# Arduino Core for Adafruit Bluefruit nRF52 Boards
+# Adafruit Bluefruit nRF52 Boards with Eddystone TLM && Custom TLM packet
 
-This repository contains the Arduino BSP for Adafruit nRF52 series:
+This is modifyed repository contains the Arduino BSP for Adafruit nRF52 series, rough EddystoneTLM and custom payload TLM packed added:
 
 - [Bluefruit Feather nRF52832](https://www.adafruit.com/product/3406)
 
