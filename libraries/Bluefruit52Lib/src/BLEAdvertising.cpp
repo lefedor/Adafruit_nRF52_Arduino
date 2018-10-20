@@ -325,12 +325,17 @@ bool BLEAdvertising::setBeacon(EddyStoneUrl& eddy_url)
   return eddy_url.start();
 }
 
+
+
+/* ================================================================== */
 /* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
 
 bool BLEAdvertising::setBeacon(EddyStoneTlm& eddy_tlm)
 {
   return eddy_tlm.start();
 }
+
+
 
 void BLEAdvertising::restartOnDisconnect(bool enable)
 {
@@ -382,6 +387,21 @@ bool BLEAdvertising::start(uint16_t timeout)
 
   return true;
 }
+
+
+
+/* ================================================================== */
+/* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
+bool BLEAdvertising::restart(void)
+{
+
+  // Adjust Data
+  VERIFY_STATUS( sd_ble_gap_adv_data_set(_data, _count, Bluefruit.ScanResponse.getData(), Bluefruit.ScanResponse.count()), false );
+  
+  return true;
+}
+
+
 
 bool BLEAdvertising::stop(void)
 {

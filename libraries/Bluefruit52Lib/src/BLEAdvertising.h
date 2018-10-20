@@ -134,13 +134,17 @@ public:
   bool setBeacon(BLEBeacon& beacon);
   bool setBeacon(EddyStoneUrl& eddy_url);
   
+  
+  /* ================================================================== */
   /* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
   bool setBeacon(EddyStoneTlm& eddy_tlm);
-
+	
+	
   bool isRunning(void);
 
   void restartOnDisconnect(bool enable);
   bool start(uint16_t timeout = 0);
+  bool restart(void);
   bool stop (void);
 
   /*------------------------------------------------------------------*/

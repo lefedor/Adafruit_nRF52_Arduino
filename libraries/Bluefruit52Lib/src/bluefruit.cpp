@@ -112,6 +112,7 @@ AdafruitBluefruit::AdafruitBluefruit(void)
 
   _ppcp_min_conn = BLE_GAP_CONN_MIN_INTERVAL_DFLT;
   _ppcp_max_conn = BLE_GAP_CONN_MAX_INTERVAL_DFLT;
+  _ppcp_conn_sup_timeout = BLE_GAP_CONN_SUPERVISION_TIMEOUT_MS / 10; // in 10ms unit
   _conn_interval = 0;
 
   _connect_cb    = NULL;
@@ -409,7 +410,7 @@ err_t AdafruitBluefruit::begin(uint8_t prph_count, uint8_t central_count)
       .min_conn_interval = _ppcp_min_conn, // in 1.25ms unit
       .max_conn_interval = _ppcp_max_conn, // in 1.25ms unit
       .slave_latency     = BLE_GAP_CONN_SLAVE_LATENCY,
-      .conn_sup_timeout  = BLE_GAP_CONN_SUPERVISION_TIMEOUT_MS / 10 // in 10ms unit
+      .conn_sup_timeout  = _ppcp_conn_sup_timeout, // in 10ms unit
   };
 
   VERIFY_STATUS( sd_ble_gap_ppcp_set(&gap_conn_params) );
@@ -547,7 +548,7 @@ bool AdafruitBluefruit::setConnInterval(uint16_t min, uint16_t max)
       .min_conn_interval = _ppcp_min_conn, // in 1.25ms unit
       .max_conn_interval = _ppcp_max_conn, // in 1.25ms unit
       .slave_latency     = BLE_GAP_CONN_SLAVE_LATENCY,
-      .conn_sup_timeout  = BLE_GAP_CONN_SUPERVISION_TIMEOUT_MS / 10 // in 10ms unit
+      .conn_sup_timeout  = _ppcp_conn_sup_timeout // in 10ms unit
   };
 
   VERIFY_STATUS( sd_ble_gap_ppcp_set(&gap_conn_params), false);
@@ -560,6 +561,28 @@ bool AdafruitBluefruit::setConnIntervalMS(uint16_t min_ms, uint16_t max_ms)
   return setConnInterval( MS100TO125(min_ms), MS100TO125(max_ms) );
 }
 
+
+bool AdafruitBluefruit::setConnSupervisionTimeout(uint16_t timeout)
+{
+  _ppcp_conn_sup_timeout = timeout;
+
+  ble_gap_conn_params_t   gap_conn_params =
+  {
+      .min_conn_interval = _ppcp_min_conn, // in 1.25ms unit
+      .max_conn_interval = _ppcp_max_conn, // in 1.25ms unit
+      .slave_latency     = BLE_GAP_CONN_SLAVE_LATENCY,
+      .conn_sup_timeout  = _ppcp_conn_sup_timeout // in 10ms unit
+  };
+
+  VERIFY_STATUS( sd_ble_gap_ppcp_set(&gap_conn_params), false);
+
+  return true;
+}
+
+bool AdafruitBluefruit::setConnSupervisionTimeoutMS(uint16_t timeout_ms)
+{
+  return setConnSupervisionTimeout(timeout_ms / 10); // 10ms unit
+}
 
 void AdafruitBluefruit::setConnectCallback( BLEGap::connect_callback_t fp )
 {
@@ -730,6 +753,10 @@ void AdafruitBluefruit::printInfo(void)
   Serial.printf("max = %.2f ms", _ppcp_max_conn*1.25f);
   Serial.println();
 
+  Serial.printf(title_fmt, "Conn Timeout");
+  Serial.printf("%.2f ms", _ppcp_conn_sup_timeout*10.0f);
+  Serial.println();
+
   /*------------- List the paried device -------------*/
   Serial.printf(title_fmt, "Peripheral Paired Devices");
   Serial.println();
@@ -796,7 +823,7 @@ void adafruit_ble_task(void* arg)
   (void) arg;
 
 #if SD_VER >= 500
-  uint8_t * ev_buf = (uint8_t*) rtos_malloc(BLE_EVT_LEN_MAX(BLEGATT_ATT_MTU_MAX));
+  uint8_t * ev_buf = (uint8_t*) rtos_malloc(BLE_EVT_LEN_MAX(BLE_GATT_ATT_MTU_MAX));
 #endif
 
   while (1)
@@ -812,7 +839,7 @@ void adafruit_ble_task(void* arg)
         __ALIGN(4) uint8_t ev_buf[ sizeof(ble_evt_t) + (BLE_GATT_ATT_MTU_DEFAULT) ];
         uint16_t ev_len = sizeof(ev_buf);
 #else
-        uint16_t ev_len = BLE_EVT_LEN_MAX(BLEGATT_ATT_MTU_MAX);
+        uint16_t ev_len = BLE_EVT_LEN_MAX(BLE_GATT_ATT_MTU_MAX);
 #endif
 
         // Get BLE Event

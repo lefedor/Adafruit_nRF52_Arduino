@@ -1,5 +1,26 @@
 # Adafruit nRF52 Arduino Core Changelog
 
+## 0.8.6
+
+- Fixed dbgDumpMemory for buffer > 255 byte, thanks to @airbornemint
+- Added setConnSupervisionTimeout and setConnSupervisionTimeoutMS, thanks to @airbornemint
+- Decrease gpio's interrupt level to 2 to avoid conlfict with SD timing critical task, thanks to @Nenik
+- Fixed #174 window build error with Arduino 1.8.6 with verbose = off
+
+## 0.8.5
+
+- Migrate nrfutil to adafruit-nrfutil, executable binaries for windows and macOS are included.
+- Implement #166 BLE HID Keyboard LED receive from Central, update hid_keyscan & hid_keyboard example.
+- Add hardware's systick sketch example
+- Add software timer's sketch example
+
+## 0.8.4
+
+- Fix #160: hardware PWM issue that cause Servo freq is 640 hz instead of 50hz
+- Fix #134:  hardcoded pulse limits with Servo
+- Fix upload issue with windows when username has spaces
+- Support serialEvent()
+
 ## 0.8.3
 
 - Enhanced indicate API() to wait for confirm or timeout from peer.

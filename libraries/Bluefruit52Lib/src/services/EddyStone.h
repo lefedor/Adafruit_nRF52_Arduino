@@ -66,23 +66,46 @@ class EddyStoneUrl
 };
 
 
+
+/* ================================================================== */
 /* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
+
+
 
 class EddyStoneTlm
 {
   
   private:
+    
     int8_t _rssi;
+    
+    int8_t _eddy_version;
+    int64_t _eddy_payloadSlotA;
+    int32_t _eddy_payloadSlotB;
+    
     float _temp;
     float _batt;
+    
+    unsigned long _pockets;
+    unsigned long _uptime;
 
   public:
   
     EddyStoneTlm(void);
-    EddyStoneTlm(int8_t rssiAt0m, float temp = 0x8000, float batt = 0x8000);
-
-    bool setTemp(float temp);
-    bool setBatt(float batt);
+    EddyStoneTlm(int8_t rssiAt0m, float temp = 0x8000, float batt = 0x8000, unsigned long pockets = 0, unsigned long uptime = 0);
+    EddyStoneTlm(int8_t rssiAt0m, int8_t wversion = 0x00, uint64_t wPayloadA = 0x0000000000000000, uint32_t wPayloadB = 0x00000000);
+	
+	
+    void setTemp(float temp);
+    void setBatt(float batt);
+    
+	void setTlmVersion(int8_t wversion = 0x00);
+    void setPayloadA(uint64_t wData = 0x0000000000000000);
+    void setPayloadB(uint32_t wData = 0x00000000);
+    
+    void setPockets(unsigned long pockets);
+    void setUptime (unsigned long uptime);
+    
     void setRssi(int8_t rssiAt0m);
 
     bool start(void);

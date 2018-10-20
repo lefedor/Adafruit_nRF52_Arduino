@@ -180,6 +180,9 @@ bool EddyStoneUrl::start(void)
 }
 
 
+/* ================================================================== */
+
+
 
 /* Eddystone TLM frame support, lefedor: ffl.public@gmail.com */
 
@@ -188,13 +191,43 @@ EddyStoneTlm::EddyStoneTlm(void)
   _rssi = 0;
   _temp = 0;
   _batt = 0;
+  
+  _eddy_payloadSlotA = 0x0000000000000000;
+  _eddy_payloadSlotB = 0x00000000;
+  
+  _eddy_version = 0x00;
 }
 
-EddyStoneTlm::EddyStoneTlm(int8_t rssiAt0m, float temp, float batt)
+EddyStoneTlm::EddyStoneTlm(int8_t rssiAt0m, int8_t wversion, uint64_t wPayloadA, uint32_t wPayloadB)
+{
+  
+  _rssi = rssiAt0m;
+  
+  _temp = 0.0f;
+  _batt = 0.0f;
+  _pockets = 0u;
+  _uptime = 0u;
+
+  _eddy_payloadSlotA = wPayloadA;
+  _eddy_payloadSlotB = wPayloadB;
+  
+  _eddy_version = wversion;
+  
+}
+
+EddyStoneTlm::EddyStoneTlm(int8_t rssiAt0m, float temp, float batt, unsigned long pockets, unsigned long uptime)
 {
   _rssi = rssiAt0m;
   _temp = temp;
   _batt = batt;
+  _pockets = pockets;
+  _uptime = uptime;
+  
+  _eddy_payloadSlotA = 0x0000000000000000;
+  _eddy_payloadSlotB = 0x00000000;
+  
+  _eddy_version = 0x00;
+  
 }
 
 void EddyStoneTlm::setRssi(int8_t rssiAt0m)
@@ -202,91 +235,179 @@ void EddyStoneTlm::setRssi(int8_t rssiAt0m)
   _rssi = rssiAt0m;
 }
 
-bool EddyStoneTlm::setTemp(float temp)
+
+void EddyStoneTlm::setTlmVersion(int8_t wversion)
+{
+  _eddy_version = wversion;
+}
+
+void EddyStoneTlm::setPayloadA(uint64_t wData)
+{
+  _eddy_payloadSlotA = wData;
+}
+
+void EddyStoneTlm::setPayloadB(uint32_t wData)
+{
+  _eddy_payloadSlotB = wData;
+}
+
+
+void EddyStoneTlm::setTemp(float temp)
 {
   _temp = temp;
 }
 
-bool EddyStoneTlm::setBatt(float batt)
+void EddyStoneTlm::setBatt(float batt)
 {
   _batt = batt;
 }
 
-bool EddyStoneTlm::start(void)
+void EddyStoneTlm::setPockets(unsigned long pockets)
 {
- 
-  struct ATTR_PACKED {
-	
-	//uint8_t  length;
-	
-	uint16_t eddy_uuid;
-	
-    uint8_t frame_type;
-    uint8_t version;
-    
-    uint16_t batt;
-    uint16_t temp;
-    
-    uint32_t pdu_count;
-    uint32_t pwr_on_time;
-    
-  } eddy =
-  {
-      //.length = 0x11,
-      
-      .eddy_uuid  = UUID16_SVC_EDDYSTONE,
-      .frame_type = EDDYSTONE_TYPE_TLM,
-      //.frame_type = 0x11,
-      
-      .version = 0x00,
-      
-      .batt = 0x0000,
-      .temp = 0x8000,
-      
-      .pdu_count = 0x00000000,
-      .pwr_on_time = 0x00000000
-      
-  };
+  _pockets = pockets;
+}
 
-  
-  float batt = _batt;
-  float temp = _temp;
-  
-  uint16_t batt_adv = (uint16_t)((int)(1000 * batt));
-  batt_adv = (batt_adv>>8) | (batt_adv<<8);
-  eddy.batt = batt_adv;
-  
-  uint16_t temp_adv = (uint16_t)((int)(temp*256.0));
-  
-  //temp_adv = (temp_adv>>8) | (temp_adv<<8);
-  
-  eddy.temp = temp_adv;
-  
-  uint32_t pwr_on_time_adv = (uint32_t)((unsigned long)(millis() / 100));
-  pwr_on_time_adv = ((pwr_on_time_adv>>24)&0xff) | // move byte 3 to byte 0
-                    ((pwr_on_time_adv<<8)&0xff0000) | // move byte 1 to byte 2
-                    ((pwr_on_time_adv>>8)&0xff00) | // move byte 2 to byte 1
-                    ((pwr_on_time_adv<<24)&0xff000000); // byte 0 to byte 3
-
-  eddy.pwr_on_time = pwr_on_time_adv;
-  
-  // TLM data len
-  uint8_t len = 16;
-  
-  // Clear data frame
-  Bluefruit.Advertising.clearData();
-  
-  // Add UUID16 list with EddyStone
-  VERIFY ( Bluefruit.Advertising.addUuid(UUID16_SVC_EDDYSTONE) );
-
-  // Add Eddystone Service Data
-  VERIFY ( Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_SERVICE_DATA, &eddy, len) );
-  //VERIFY ( Bluefruit.Advertising.setData(advdata_tlm, sizeof(advdata_tlm)) );
-
-  return true;
-  
+void EddyStoneTlm::setUptime(unsigned long uptime)
+{
+  _uptime = uptime;
 }
 
 
+bool EddyStoneTlm::start(void)
+{
+ 
+  if(!_eddy_version) {
+	 
+	  struct ATTR_PACKED {
+		
+		//uint8_t  length;
+		
+		uint16_t eddy_uuid;
+		
+		uint8_t frame_type;
+		uint8_t eddy_version;
+		
+		uint16_t batt;
+		uint16_t temp;
+		
+		uint32_t pdu_count;
+		uint32_t pwr_on_time;
+		
+	  } eddy =
+	  {
+		  //.length = 0x11,
+		  
+		  .eddy_uuid  = UUID16_SVC_EDDYSTONE,
+		  .frame_type = EDDYSTONE_TYPE_TLM,
+		  //.frame_type = 0x11,
+		  
+		  .eddy_version = 0x00,
+		  
+		  .batt = 0x0000,
+		  .temp = 0x8000,
+		  
+		  .pdu_count = 0x00000000,
+		  .pwr_on_time = 0x00000000
+		  
+	  };
 
+	  
+	  float batt = _batt;
+	  float temp = _temp;
+	  
+	  uint16_t batt_adv = (uint16_t)((int)(1000 * batt));
+	  batt_adv = (batt_adv>>8) | (batt_adv<<8);
+	  eddy.batt = batt_adv;
+	  
+	  uint16_t temp_adv = (uint16_t)((int)(temp*256.0));
+	  
+	  //temp_adv = (temp_adv>>8) | (temp_adv<<8);
+	  
+	  eddy.temp = temp_adv;
+	  
+	  uint32_t pwr_on_time_adv = (uint32_t)((unsigned long)(millis() / 100));
+	  pwr_on_time_adv = ((pwr_on_time_adv>>24)&0xff) | // move byte 3 to byte 0
+						((pwr_on_time_adv<<8)&0xff0000) | // move byte 1 to byte 2
+						((pwr_on_time_adv>>8)&0xff00) | // move byte 2 to byte 1
+						((pwr_on_time_adv<<24)&0xff000000); // byte 0 to byte 3
 
+	  eddy.pwr_on_time = pwr_on_time_adv;
+	  
+	  eddy.eddy_version = 0x00;
+	  
+	  // TLM data len
+	  uint8_t len = 16;
+	  
+	  // Clear data frame
+	  Bluefruit.Advertising.clearData();
+	  
+	  // Add UUID16 list with EddyStone
+	  VERIFY ( Bluefruit.Advertising.addUuid(UUID16_SVC_EDDYSTONE) );
+
+	  // Add Eddystone Service Data
+	  VERIFY ( Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_SERVICE_DATA, &eddy, len) );
+	  //VERIFY ( Bluefruit.Advertising.setData(advdata_tlm, sizeof(advdata_tlm)) );
+  }
+  else{
+	  
+	  
+	  union {
+		uint64_t uval;
+		byte bval[8];
+	  } wUintPayLoadAAsBytes;
+	  
+	  
+	  union {
+		uint32_t uval;
+		byte bval[4];
+	  } wUintPayLoadBAsBytes;
+	  
+	  
+	  struct ATTR_PACKED {
+		
+		uint16_t eddy_uuid;
+		
+		uint8_t frame_type;
+		uint8_t eddy_version;
+		
+		uint64_t pdu_slotA;
+		uint32_t pdu_slotB;
+		
+	  } eddyTlmCustom =
+	  {
+		  
+		  .eddy_uuid  = UUID16_SVC_EDDYSTONE,
+		  .frame_type = EDDYSTONE_TYPE_TLM,
+		  
+		  .eddy_version = 0x00,
+		  
+		  .pdu_slotA = 0x0000000000000000,
+		  .pdu_slotB = 0x00000000
+		  
+	  };
+	  
+	  
+	  eddyTlmCustom.eddy_version = _eddy_version;
+	  
+	  eddyTlmCustom.pdu_slotA = _eddy_payloadSlotA;
+	  eddyTlmCustom.pdu_slotB = _eddy_payloadSlotB;
+	  
+	  
+	  // TLM data len
+	  uint8_t len = 16;
+	  
+	  // Clear data frame
+	  Bluefruit.Advertising.clearData();
+	  
+	  // Add UUID16 list with EddyStone
+	  VERIFY ( Bluefruit.Advertising.addUuid(UUID16_SVC_EDDYSTONE) );
+
+	  // Add Eddystone Service Data
+	  VERIFY ( Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_SERVICE_DATA, &eddyTlmCustom, len) );
+	  //VERIFY ( Bluefruit.Advertising.setData(advdata_tlm, sizeof(advdata_tlm)) );
+	  
+  }
+  
+  return true;
+  
+}
