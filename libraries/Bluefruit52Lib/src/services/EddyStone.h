@@ -90,6 +90,8 @@ class EddyStoneTlm
     unsigned long _uptime;
 
   public:
+    
+    int8_t w_eddy_version;
   
     EddyStoneTlm(void);
     EddyStoneTlm(int8_t rssiAt0m, float temp = 0x8000, float batt = 0x8000, unsigned long pockets = 0, unsigned long uptime = 0);
@@ -99,7 +101,10 @@ class EddyStoneTlm
     void setTemp(float temp);
     void setBatt(float batt);
     
+	int8_t getTlmVersion(void);
+	
 	void setTlmVersion(int8_t wversion = 0x00);
+	
     void setPayloadA(uint64_t wData = 0x0000000000000000);
     void setPayloadB(uint32_t wData = 0x00000000);
     
@@ -109,6 +114,7 @@ class EddyStoneTlm
     void setRssi(int8_t rssiAt0m);
 
     bool start(void);
+    
 };
 
 

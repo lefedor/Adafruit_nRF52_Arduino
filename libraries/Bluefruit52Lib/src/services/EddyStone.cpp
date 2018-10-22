@@ -241,6 +241,10 @@ void EddyStoneTlm::setTlmVersion(int8_t wversion)
   _eddy_version = wversion;
 }
 
+int8_t EddyStoneTlm::getTlmVersion(void){
+	return w_eddy_version;
+}
+
 void EddyStoneTlm::setPayloadA(uint64_t wData)
 {
   _eddy_payloadSlotA = wData;
